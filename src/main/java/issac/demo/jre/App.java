@@ -3,21 +3,29 @@ package issac.demo.jre;
 import jodd.io.StreamUtil;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.time.chrono.IsoChronology;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Scanner;
 
+import static java.net.URLDecoder.decode;
+
 /**
  * Created by issac.hu on 2018/6/28.
  */
 public class App {
-     private static String jarDir=App.class.getClassLoader().getResource("").getPath();
+     private static String jarDir;
+
+    static {
+        try {
+            jarDir = decode(App.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8");
+            jarDir=jarDir.substring(0,jarDir.lastIndexOf("/"))+"/";
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+    }
+
      private static String configFilePath=jarDir+"config.properties";
 
      private static String default_rt_dir=jarDir+"rt/";
@@ -27,6 +35,8 @@ public class App {
      private static String default_jar_dir=jarDir+"tool/";
 
     public static void main(String[] args) throws IOException {
+
+
         Properties properties = new Properties();
         try {
             properties.load(new FileInputStream(configFilePath));
@@ -65,14 +75,16 @@ public class App {
 
          }
 
-     //   StreamUtil.copy(new FileInputStream(new File(class_txt_path)),System.out);
-        Scanner scanner=new Scanner(new File(class_txt_path));
-        scanner.useDelimiter("\r\n");
+        StringWriter stringWriter=new StringWriter();
+        StreamUtil.copy(new FileInputStream(new File(class_txt_path)),stringWriter);
+        String classTxt = stringWriter.getBuffer().toString();
+        String[] split = classTxt.split("\r\n");
+
 
         List<String> rtList=new ArrayList<>();
         List<String> toolList=new ArrayList<>();
-        while (scanner.hasNext()){
-            String line = scanner.next();
+        for (String line :split){
+            System.out.println(line);
             if (line.contains("rt.jar")&&!line.contains("[Opened")){
                 String tmp = line.replace("[Loaded ", "").replaceAll(" from .*", "").replace(".","/")+".class";
                 rtList.add(tmp);
